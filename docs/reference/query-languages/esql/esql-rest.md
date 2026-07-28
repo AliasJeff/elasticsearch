@@ -92,6 +92,8 @@ Complete responses with metadata. Useful for automatic parsing.
 | `json` | `application/json` | [JSON](https://www.json.org/) (JavaScript Object Notation) human-readable format |
 | `yaml` | `application/yaml` | [YAML](https://en.wikipedia.org/wiki/YAML) (YAML Ain’t Markup Language) human-readable format |
 
+For `json` and `yaml`, non-finite floating-point values in `double` and `float` columns can be returned as string values such as `NaN`, `Infinity`, and `-Infinity`. This can also apply to values inside multivalued columns.
+
 ### Tabular formats
 
 Query results only, without metadata. Useful for quick and manual data previews.
@@ -120,7 +122,6 @@ Compact binary encoding. To be used by applications.
 | `cbor` | `application/cbor` | [Concise Binary Object Representation](https://cbor.io/) |
 | `smile` | `application/smile` | [Smile](https://en.wikipedia.org/wiki/Smile_(data_interchange_format)) binary data format similarto CBOR |
 | `arrow` | `application/vnd.apache.arrow.stream` | **Experimental.** [Apache Arrow](https://arrow.apache.org/) dataframes, [IPC streaming format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format) |
-
 
 ## Filter using {{es}} Query DSL [esql-rest-filtering]
 
@@ -235,6 +236,33 @@ Which returns:
 }
 ```
 % TESTRESPONSE[s/"took": 28/"took": "$body.took"/]
+
+Non-finite floating-point values can appear as strings in row and columnar results. For example:
+
+```console
+POST /_query?format=json
+{
+  "query": """
+    ROW a = [1.7976931348623157e+308, 1.7976931348623157e+308]
+    | STATS x = SUM(a)
+    | EVAL x = MV_APPEND(x, 1.234)
+  """
+}
+```
+% TEST[skip:non-finite values are implementation-dependent and may change with aggregation handling]
+
+Can return:
+
+```console-result
+{
+  "columns": [
+    {"name": "x", "type": "double"}
+  ],
+  "values": [
+    [["Infinity", 1.234]]
+  ]
+}
+```
 
 ### Setting the query timezone [esql-timezones]
 ```{applies_to}

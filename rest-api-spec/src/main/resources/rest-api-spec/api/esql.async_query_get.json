@@ -30,7 +30,7 @@
     "params": {
       "format": {
         "type": "enum",
-        "description": "A short version of the Accept header, for example `json` or `yaml`.",
+        "description": "A short version of the Accept header, for example `json` or `yaml`.\n\nFor `json` and `yaml`, non-finite floating-point values in `double` and `float` columns can be returned as string values such as `NaN`, `Infinity`, and `-Infinity`.",
         "options": [
           "csv",
           "json",
